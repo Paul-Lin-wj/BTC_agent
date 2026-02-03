@@ -1,0 +1,7 @@
+last_modified: 1769651205.1966007
+models:
+  stock_agent:
+    enabled: true
+    last_updated: 1769651205.196602
+    provider: Uncategorized
+version: '1.0'
