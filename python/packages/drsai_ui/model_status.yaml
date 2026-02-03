@@ -1,0 +1,7 @@
+last_modified: 1770010965.7442422
+models:
+  chart_agent:
+    enabled: true
+    last_updated: 1770010965.7442434
+    provider: Uncategorized
+version: '1.0'

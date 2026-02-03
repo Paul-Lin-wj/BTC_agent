@@ -1,0 +1,126 @@
+######################################
+# Model client configuration #
+######################################
+model_config: &client
+  provider: drsai.HepAIChatCompletionClient
+  config:
+    model: openai/gpt-4o
+    api_key: sk-****
+    base_url: "https://aiapi.ihep.ac.cn/apiv2"
+    max_retries: 10
+
+
+##########################
+# Tools configuration #
+##########################
+mcp_tools_1: &tool_1
+  type: std
+  command: python3
+  args:
+    - /your/path/to/mcp_server.py
+  env: null
+
+# mcp_tools_2: &tool_2
+#   type: sse
+#   url: www.example.com
+#   headers:
+#     Authorization: Bearer <token>
+#     event_name: mcp_tools_event
+#   timeout: 20
+#   sse_read_timeout: 300
+
+hepai_tools_1: &hepai_tool_1
+  worker_name: besiii_boss_08
+  api_key: sk-****
+  allowed_tools:
+    - json_mapping
+    - job_status
+  base_url: "https://aiapi.ihep.ac.cn/apiv2" # Not needed if using default base_url in model_config
+
+source_tools_1: &source_tool_1
+  type: FunctionTool
+  config:
+    source_code: |
+        def calculator(a: float, b: float, operator: str) -> str:
+            try:
+                if operator == "+":
+                    return str(a + b)
+                elif operator == "-":
+                    return str(a - b)
+                elif operator == "*":
+                    return str(a * b)
+                elif operator == "/":
+                    if b == 0:
+                        return "Error: Division by zero"
+                    return str(a / b)
+                else:
+                    return "Error: Invalid operator. Please use +, -, *, or /"
+            except Exception as e:
+                return f"Error: {str(e)}"
+    name: calculator
+    description: A simple calculator that performs basic arithmetic operations
+    global_imports:
+      - math: 
+        - pi
+        - e
+    has_cancellation_support: False
+
+##########################
+# Memory configuration #
+##########################
+knowledge_cofig_1: &ragflow_1
+  type: RAGFlow
+  config: 
+    api_key: ragflow-***
+    base_url: https://aiweb01.ihep.ac.cn:886
+    dataset_ids:
+      - 70722df8519011f08a170242ac120006
+    similarity_threshold: 0.2
+
+
+##########################
+# Constructing agent #
+##########################
+myassistant:
+  type: AssistantAgent/UserProxyAgent/DrSaiSelectorGroupChat/DrSaiRoundRobinGroupChat
+  name: myassistant
+  system_message: "You are a helpful assistant who responds to user requests based on your tools and knowledge."
+  description: "An agent that provides assistance with ability to use tools."
+  model_client: *client
+  mcp_tools:
+    - *tool_1
+  hepai_tools:
+    - *hepai_tool_1
+  source_tools:
+    - *source_tool_1
+  knowledge_cofig: *ragflow_1
+  # memory_cofig: *memory_1
+
+
+##########################
+# Some preset Agent and Groupchat modes #
+##########################
+# Use_default_Agent_Groupchat_mode: 
+#   provider: magentic-one
+#   config:
+#     orchestrator_client: *client
+#     coder_client: *client
+#     web_surfer_client: *client
+#     file_surfer_client: *client
+#     action_guard_client: *client
+
+# Use_installed_Agent_Groupchat_mode: 
+#   provider: besiii
+#   config:
+#     planner_client: *client
+#     coder_client: *client
+#     tester_client: *client
+#     worker:
+#       name: besiii_boss_08
+#       api_key: sk-***
+#       url: https://aiapi.ihep.ac.cn/apiv2
+
+# Use_remote_Agent_Groupchat_mode: 
+#   name: drsai_besiii
+#   api_key: sk-***
+#   url: https://aiapi.ihep.ac.cn/apiv2/chat/completions
